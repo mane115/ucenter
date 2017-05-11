@@ -245,6 +245,7 @@ a user center server
 	**method**:GET
 	
 	**query**
+
 	|param|type|name|
 	|:--|:----|:----|
 	|refresh_token|String|refresh token|
@@ -339,6 +340,7 @@ a user center server
 	|Authorization|String|oauth type & token 
 	
 	**body**
+
 	|key|type|name
 	|:--|:----|:----|
 	|old_password|String|user old password
@@ -365,6 +367,7 @@ a user center server
 	|secrect|String|app secrect
 
 	**body**
+
 	|key|type|name
 	|:--|:----|:----|
 	|password|String|user new password
@@ -386,6 +389,7 @@ a user center server
 	**method**:POST
 
 	**body**
+
 	|key|type|name
 	|:--|:----|:----|
 	|mobile|String|the mobile to receive sms

@@ -8,7 +8,7 @@ a user center server
 
 	**url**:/admin/app
 
-	**method**:post
+	**method**:POST
 
 	**body**
 
@@ -27,11 +27,12 @@ a user center server
 
 	**response**
 	
-	|param|type|name
-	|:--|:----|:----|:---|
-	|code|Number|status code 0:success 
-	|message|String|status code message
+	|param|type|name|
+	|:--|:----|:----|
+	|code|Number|status code 0:success|
+	|message|String|status code message|
 	
+		
 	**example**
 	
 	

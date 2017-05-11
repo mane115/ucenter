@@ -5,6 +5,7 @@ a user center server
 ###### baseUrl : /api/v1
 #### admin
 * ####apply app
+
 	**url**:/admin/app
 
 	**method**:post

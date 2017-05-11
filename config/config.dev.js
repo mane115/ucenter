@@ -32,7 +32,7 @@ module.exports = {
         mysql: {
             connectionLimit: 100,
             getConnection: 100,
-            host: '120.24.43.211',
+            host: '127.0.0.1',
             user: 'root',
             password: 'password',
             database: 'user',

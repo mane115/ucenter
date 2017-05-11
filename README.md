@@ -99,8 +99,7 @@ a user center server
 	```js
 	{
 		"mobile":"13823099998",
-		"password":"e10adc3949ba59abbe56e057f20f883e",
-		"verify_code":"handsomegh"
+		"password":"e10adc3949ba59abbe56e057f20f883e"
 	}
 
 	```
@@ -168,8 +167,7 @@ a user center server
 	```js
 	{
 		"mobile":"13823099998",
-		"password":"e10adc3949ba59abbe56e057f20f883e",
-		"verify_code":"handsomegh"
+		"password":"e10adc3949ba59abbe56e057f20f883e"
 	}
 
 	```

@@ -4,24 +4,26 @@ var mongo = require('../model/mongo'),
     util = require('../util');
 /**
  * 创建用户独立app信息
- * @params app {string} app号
- * @params userId {string} 用户实体id
- * @params password {string} 加盐加密后的密码
+ * @param app {string} app号
+ * @param userId {string} 用户实体id
+ * @param password {string} 加盐加密后的密码
+ * @param shortId {shortId} 用户短id
  * @return app {object} 用户app实体数据
  * @author gh
  */
-var create = function(app, userId, password) {
+var create = function(app, userId, password, shortId) {
     var entity = {
         app_id: app,
         user_id: userId,
-        password: password
+        password: password,
+        user_short_id: shortId
     };
     return mongo.apps.create(entity);
 };
 /**
  * 获取用户独立app信息
- * @params app {string} app号
- * @params userId {string} 用户实体id
+ * @param app {string} app号
+ * @param userId {string} 用户实体id
  * @return app {object} 用户app实体数据
  * @author gh
  */
@@ -34,7 +36,7 @@ var find = function(app, userId) {
 };
 /**
  * 获取用户独立app信息
- * @params id {string} app数据主键
+ * @param id {string} app数据主键
  * @return app {object} 用户app旧的实体数据
  * @author gh
  */
@@ -49,8 +51,8 @@ var updateLoginAt = function(id) {
 };
 /**
  * 获取用户独立app信息
- * @params app {string} app号
- * @params userId {string} 用户实体id
+ * @param app {string} app号
+ * @param userId {string} 用户实体id
  * @return result {object} 更新结果
  * @author gh
  */
@@ -66,8 +68,8 @@ var updateRefreshAt = function(app, userId) {
 };
 /**
  * 修改用户独立app密码
- * @params id {string} app实体id
- * @params password {string} 新密码
+ * @param id {string} app实体id
+ * @param password {string} 新密码
  * @return result {object} 更新前的查询结果
  * @author gh
  */

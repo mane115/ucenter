@@ -3,6 +3,7 @@ exports = module.exports = function(conn, mongoose) {
     var apps = new mongoose.Schema({
         app_id: String,
         user_id: String,
+        user_short_id: Number,
         password: String,
         status: {
             type: Number,
@@ -31,5 +32,6 @@ exports = module.exports = function(conn, mongoose) {
         }
     });
     apps.index({app_id: 1, user_id: 1});
+    apps.index({app_id: 1, user_short_id: 1});
     conn.model('apps', apps);
 }

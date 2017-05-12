@@ -2,6 +2,7 @@ const userDao = require('../dao/user'),
     tokenDao = require('../dao/token'),
     appDao = require('../dao/app'),
     tokenRedisDao = require('../dao/redis/token'),
+    userRedisDao = require('../dao/redis/user'),
     passport = require('../service/passport'),
     STATUS = require('../common/const').STATUS,
     ERROR = require('../common/error.map');
@@ -16,8 +17,13 @@ var create = async function(ctx, next) {
     } else {
         user = await userDao.createUserByMobile(body.mobile, app);
     }
-    password = await passport.encrypt(body.password);
-    await appDao.create(app, user._id, password);
+    var results = await Promise.all([
+        passport.encrypt(body.password),
+        userRedisDao.incTotal(app)
+    ]);
+    var password = results[0];
+    var shortId = results[1];
+    await appDao.create(app, user._id, password, shortId);
     ctx.user = user;
     ctx.logger.info(`用户 ${body.mobile} 注册app ${app}`)
     await next()

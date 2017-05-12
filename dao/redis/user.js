@@ -38,7 +38,7 @@ var daySignInRecord = async function(userId, app) {
     var date = new Date();
     var key = userLoginKey(app, date);
     await redis.setbitAsync(key, userId, 1);
-    redis.exprie(key)
+    // redis.exprie(key)
 };
 /**
   @todo 记录用户登出状态
@@ -61,7 +61,7 @@ var getOnlineCount = function(app) {
     var key = userLoginKey(app);
     return redis.bitcountAsync(key, 0, -1);
 };
-moduele.exports = {
+module.exports = {
     incTotal,
     getTotal,
     daySignInRecord,

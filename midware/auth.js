@@ -26,12 +26,13 @@ var getTokenInfo = async function(ctx, next) {
     if (token.length !== 2) {
         throw ERROR.AUTH.UNAUTH
     }
-    var tokenInfo = await tokenRedisDao.getTokenInfo(token[1], 'user_id', 'app_id', 'type');
+    var tokenInfo = await tokenRedisDao.getTokenInfo(token[1], 'user_id', 'app_id', 'type', 'user_short_id');
     var accessToken = token[1];
     var oauthType = token[0];
     var userId = tokenInfo[0];
     var tokenApp = tokenInfo[1];
     var tokenType = tokenInfo[2];
+    var userShortId = tokenInfo[3];
     if (!userId || tokenApp !== app || tokenType !== 'access_token') {
         throw ERROR.AUTH.UNAUTH
     }
@@ -39,7 +40,8 @@ var getTokenInfo = async function(ctx, next) {
         user_id: userId,
         access_token: accessToken,
         oauth_type: oauthType,
-        app: app
+        app: app,
+        user_short_id: userShortId
     };
     await next();
 };

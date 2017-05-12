@@ -24,7 +24,8 @@ var create = async function(ctx, next) {
     var password = results[0];
     var shortId = results[1];
     await appDao.create(app, user._id, password, shortId);
-    ctx.user = user;
+    ctx.user = user.toJSON()
+    ctx.user.user_short_id = shortId;
     ctx.logger.info(`用户 ${body.mobile} 注册app ${app}`)
     await next()
 };

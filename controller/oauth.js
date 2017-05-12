@@ -2,6 +2,7 @@ const userDao = require('../dao/user'),
     appDao = require('../dao/app'),
     tokenDao = require('../dao/token'),
     tokenRedisDao = require('../dao/redis/token'),
+    userRedisDao = require('../dao/redis/user'),
     passport = require('../service/passport'),
     tokenService = require('../service/token'),
     STATUS = require('../common/const').STATUS,
@@ -24,10 +25,12 @@ var signin = async function(ctx, next) {
     if (!result) {
         throw ERROR.OAUTH.PASSWORD_ERROR;
     }
-    ctx.user = user;
+    ctx.user = user.toJSON()
+    ctx.user.user_short_id = appInfo.user_short_id;
     ctx.logger.info(`用户 ${body.mobile} 登录app ${app}`);
     await next();
     appDao.updateLoginAt(appInfo._id);
+    userRedisDao.daySignInRecord(appInfo.user_short_id, app);
 };
 var grantToken = async function(ctx, next) {
     var app = ctx.get('app');
@@ -41,6 +44,7 @@ var grantToken = async function(ctx, next) {
     var refExpire = Math.round(tokenInfo.refreshTokenExpiresOn.getTime() / 1000);
     tokenInfo.app = app;
     tokenInfo.user_id = ctx.user._id.toString();
+    tokenInfo.user_short_id = ctx.user.user_short_id;
     var result = await Promise.all([
         tokenDao.saveToken(app, ctx.user._id, tokenInfo),
         tokenRedisDao.saveNewToken(tokenInfo.accessToken, actExpire, tokenInfo, 'access_token'),
@@ -88,13 +92,14 @@ var signout = async function(ctx, next) {
         tokenRedisDao.delToken(expiredToken.access_token),
         tokenRedisDao.delToken(expiredToken.refresh_token)
     ]);
+    userRedisDao.daySignOutRecord(ctx.oauth.user_short_id, ctx.oauth.app);
     ctx.logger.info(`用户 ${ctx.oauth.user_id} 登出app ${ctx.oauth.app}`);
 };
 var refresh = async function(ctx, next) {
     var refreshToken = ctx.query.refresh_token;
     var app = ctx.get('app');
     var now = new Date();
-    var refreshTokenInfo = await tokenRedisDao.getTokenInfo(refreshToken, 'user_id', 'app_id', 'expire_at', 'type', 'access_token');
+    var refreshTokenInfo = await tokenRedisDao.getTokenInfo(refreshToken, 'user_id', 'app_id', 'expire_at', 'type', 'access_token', 'user_short_id');
     if (!refreshTokenInfo[0] || refreshTokenInfo[1] !== app || refreshTokenInfo[3] !== 'refresh_token') {
         throw ERROR.AUTH.RE_SIGNIN;
     }
@@ -109,6 +114,7 @@ var refresh = async function(ctx, next) {
     };
     var accessTokenInfo = tokenService.refresh(expire);
     tokenInfo.accessToken = accessTokenInfo.accessToken;
+    tokenInfo.user_short_id = refreshTokenInfo[5];
     var actExpireSec = Math.round(accessTokenInfo.accessTokenExpiresOn.getTime() / 1000);
     await Promise.all([
         tokenRedisDao.saveNewToken(accessTokenInfo.accessToken, actExpireSec, tokenInfo, 'access_token'),
@@ -125,6 +131,7 @@ var refresh = async function(ctx, next) {
     };
     await next();
     appDao.updateRefreshAt(app, tokenInfo.userId);
+    userRedisDao.daySignInRecord(tokenInfo.user_short_id, app);
 };
 module.exports = {
     signin,

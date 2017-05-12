@@ -43,7 +43,20 @@ var delToken = function(token) {
  */
 var saveNewToken = async function(token, expire, tokenInfo, type = 'access_token') {
     token = tokenKey(token);
-    await redis.hmsetAsync(token, 'access_token', tokenInfo.accessToken, 'refresh_token', tokenInfo.refreshToken, 'app_id', tokenInfo.app, 'user_id', tokenInfo.user_id, 'expire_at', expire, 'type', type);
+    // await redis.hmsetAsync(token, 'access_token', tokenInfo.accessToken, 'refresh_token', tokenInfo.refreshToken, 'app_id', tokenInfo.app, 'user_id', tokenInfo.user_id, 'expire_at', expire, 'type', type);
+    // await redis.hmsetAsync(token, 'access_token', tokenInfo.accessToken, 'refresh_token', tokenInfo.refreshToken, 'app_id', tokenInfo.app, 'user_id', tokenInfo.user_id, 'expire_at', expire, 'type', type);
+    var hashValue = {
+        access_token: tokenInfo.accessToken,
+        refresh_token: tokenInfo.refreshToken,
+        app_id: tokenInfo.app,
+        user_id: tokenInfo.user_id,
+        expire_at: expire,
+        type: type
+    };
+    if (tokenInfo.user_short_id) {
+        hashValue.user_short_id = tokenInfo.user_short_id
+    }
+    await redis.hmsetAsync(token, hashValue)
     return redis.expireatAsync(token, expire);
 };
 /**

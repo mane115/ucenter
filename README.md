@@ -1,470 +1,156 @@
-# ucenter
-a user center server
-
-### api
-###### baseUrl : /api/v1
-
-#### oauth
-* #### signup 
-	**url**:/oauth/signup
-
-	**method**:POST
-	
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-
-	**body**
-	
-	|param|type|name
-	|:--|:----|:----|
-	|mobile|String|user mobile
-	|password|String|user password
-	|verify_code|String|sms verify code
+# Ucenter
+* #### model设计
+	* redis
+		* app.js
+			|key|type|name
+			|:--|:----|:----
+			|apps|hash|hget apps {appId} =>{app secret}
+		* token.js
+			|key|type|name
+			|:--|:----|:----
+			|token:${token}|hash|key为token的值|
+			|-access_token|hash field|access token
+			|-refresh_token|hash field|refresh token
+			|-app_id|hash field|token 对应的app
+			|-user_id|hash field|token对应的user id （objectId）
+			|-user_short_id|hash field|token对应的user 短id
+			|-expire_at|hash field|token 到期日期（timestamp）
+			|-type|hash field|token类型 （access_token/refresh_token）
+		* user.js
+			|key|value|name
+			|:--|:--|:--
+			|user:total:${app}|keys|存储app对应的用户总数
+			|${year}-${month}-${today}:${app}|bitmap|存储每个app每日每个用户的在线状态和在线总数（详情可搜索如何用bitmap存储用户访问信息）
+			
+	* mongo
+		* user.js
+			|key|type|name
+			|:--|:----|:----|
+			|_id|ObjectId|mongo主键
+			|short_id|Number|用户短id 基于redis.userTotalCount
+			|name|String|用户名
+			|mobile|String|用户注册手机
+			|apps|Array|用户关联的apps，以appId组成的Array
+			|status|Number|用户状态 0:active 1:baned 
+			|create_at|Date|用户创建日期
+			|chance|Number|创建的时候随机生成的0~1数，用于随机选取用户
+			索引：
+			```js
+			  	users.index({create_at: -1});
+			    users.index({name: 1});
+			    users.index({mobile: 1});
+			    users.index({short_id: 1});
+			```
+		* app.js
+			|key|type|name
+			|:--|:----|:----|
+			|_id|ObjectId|mongo主键
+			|app_id|String|app 独立的id，每个app唯一
+			|user_id|String|关联用户表的_id
+			|password|String|用户密码
+			|status|Number|用户状态 0:active 1:baned 
+			|create_at|Date|用户改app的注册时间
+			|update_at|Date|用户信息更新时间
+			|last_login|Date|上次登录时间
+			|last_refresh|Date|上册refresh token 时间
+			|login_times|Number|登陆次数
+			索引：
+			```js
+			    apps.index({app_id: 1, user_id: 1});
+			```
+		* token.js
+			|key|type|name
+			|:--|:--|:--
+			|_id|ObjectId|mongo主键
+			|user_id|String|token关联用户表的_id
+			|app_id|String|token关联的app_id
+			|access_token|String|access token
+			|refresh_token|String|refresh token
+			|access_expire_at|Date|access token 的到期时间
+			|refresh_expire_at|Date|refresh token 的到期时间
+			|platform|Array|使用过的平台
+			索引：
+			```js
+			    tokens.index({app_id: 1, user_id: 1});
+			```
 		
-	**example**
-
-	```js
-	{
-		"mobile":"13823099998",
-		"password":"e10adc3949ba59abbe56e057f20f883e",
-		"verify_code":"handsomegh"
-	}
-
-	```
 	
-	**response**
+* #### 工程目录
 	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-app|String|apply app id|
-	|-mobile|String|user mobile|
-	|-access_token|String|access token|
-	|-refresh_token|String|refresh token|
-	|-access_expire_at|Date|access token expire time|
-	|-refresh_expire_at|Date|refresh token expire time|
-	|-oauth_type|String|oauth type|
-
-	**example**
-
-	```js
-	{
-  		"code": 0,
-  		"message": "operation success",
-  		"result": {
-    		"app": "123",
-    		"mobile": "13823000000",
-    		"user_id": "591400e3ecc497063706bd17",
-    		"access_token": "5680f1b6bac4423e81ac80f2eab85b25",
-    		"refresh_token": "dd65c360361011e784cce76a99da7708",
-    		"access_expire_at": "2017-05-18T06:12:51.990Z",
-    		"refresh_expire_at": "2017-06-10T06:12:51.990Z",
-    		"oauth_type": "bearer"
-  		}
-	}
-
-	```
-
-* #### bearer signin 
-	**note**:this api will reset the user signin status
+	![untitled4.png](//dn-cnode.qbox.me/FsWYl1Q1QCrcVPUJie7_gLUFCskN)
 	
-	**note**:这个接口会把登陆前对应app的用户的所有token失效(互踢)
-	
-	**url**:/oauth/signin/bearer
-
-	**method**:POST
-	
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-
-	**body**
-	
-	|param|type|name
-	|:--|:----|:----|
-	|mobile|String|user mobile
-	|password|String|user password
+	* common 
 		
-	**example**
-
-	```js
-	{
-		"mobile":"13823099998",
-		"password":"e10adc3949ba59abbe56e057f20f883e"
-	}
-
-	```
+		- const.js 存放静态变量
+		- error.map.js 存放错误码
 	
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-app|String|apply app id|
-	|-mobile|String|user mobile|
-	|-access_token|String|access token|
-	|-refresh_token|String|refresh token|
-	|-access_expire_at|Date|access token expire time|
-	|-refresh_expire_at|Date|refresh token expire time|
-	|-oauth_type|String|oauth type|
+	* config
+		- config.dev.js 存放开发环境配置
+		- config.workong.js 开发环境配置示例
+		- config.production.js 存放生产环境配置
+		- index.js 根据运行环境返回配置文件
 
-	**example**
+	* controller 业务逻辑存放的文件目录
 
-	```js
-	{
-  		"code": 0,
-  		"message": "operation success",
-  		"result": {
-    		"app": "123",
-    		"mobile": "13823000000",
-    		"user_id": "591400e3ecc497063706bd17",
-    		"access_token": "5680f1b6bac4423e81ac80f2eab85b25",
-    		"refresh_token": "dd65c360361011e784cce76a99da7708",
-    		"access_expire_at": "2017-05-18T06:12:51.990Z",
-    		"refresh_expire_at": "2017-06-10T06:12:51.990Z",
-    		"oauth_type": "bearer"
-  		}
-	}
+	* dao 数据库代理文件夹
+		- mongo 对mongo的数据操作
+		- sql 对sql的数据操作
+		- redis 对redis的数据操作
+	* logs 日志文件夹
+	* midware 
+		- filter 该文件夹下的文件基于业务分类，封装了每个接口的数据过滤中间件
+		- auth.js 验证中间件，验证token的合法性等用途
+		- log.js 我使用的是使用log4js，所以基于业务配置了不同的appender
+			这里放一点代码解释会实际一点
+			```js
+			const log4js = require('log4js'),
+    			  adminLogger = log4js.getLogger('admin'),
+    			  oauthLogger = log4js.getLogger('oauth'),
+   				  commonLogger = log4js.getLogger('common'),
+  				  userLogger = log4js.getLogger('user');
+			var user = async(ctx, next) => {
+    			  ctx.logger = userLogger;
+   				  await next()
+			};   
+			```
+	* model 数据库model定义
 
-	```
+	* router 路由定义
 
-* #### compatible signin 
-	**note**:this api will not reset the user signin status
-	
-	**note**:这个接口会不把登陆前对应app的用户的所有token失效（当有可用token的时候，返回可用token，没有时生成token）
-	
-	**url**:/oauth/signin/bearer
+	* service 第三方服务等封装，例如我把密码加密，验证放在了这里做成一个服务，token也封装成一个服务，这样以后更改密码加密形式或者token加密形式的时候就可以直接在这里改。
 
-	**method**:POST
-	
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-
-	**body**
-	
-	|param|type|name
-	|:--|:----|:----|
-	|mobile|String|user mobile
-	|password|String|user password
-		
-	**example**
-
-	```js
-	{
-		"mobile":"13823099998",
-		"password":"e10adc3949ba59abbe56e057f20f883e"
-	}
-
-	```
-	
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-app|String|apply app id|
-	|-mobile|String|user mobile|
-	|-access_token|String|access token|
-	|-refresh_token|String|refresh token|
-	|-access_expire_at|Date|access token expire time|
-	|-refresh_expire_at|Date|refresh token expire time|
-	|-oauth_type|String|oauth type|
-
-	**example**
-
-	```js
-	{
-  		"code": 0,
-  		"message": "operation success",
-  		"result": {
-    		"app": "123",
-    		"mobile": "13823000000",
-    		"user_id": "591400e3ecc497063706bd17",
-    		"access_token": "5680f1b6bac4423e81ac80f2eab85b25",
-    		"refresh_token": "dd65c360361011e784cce76a99da7708",
-    		"access_expire_at": "2017-05-18T06:12:51.990Z",
-    		"refresh_expire_at": "2017-06-10T06:12:51.990Z",
-    		"oauth_type": "bearer"
-  		}
-	}
-
-	```
-
-* #### signout
-	
-	**url**:/oauth/signout
-
-	**method**:DELETE
-	
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-	|Authorization|String|oauth type & token 
-	
-	**example**
-	
-	```js
-		var headers = {
-			app:1234,
-			secrect:1234,
-			Authorization: bearer ${token}	
-		};
-	```
-	
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-
-* #### refresh token
-	
-	**url**:/oauth/token
-
-	**method**:GET
-	
-	**query**
-
-	|param|type|name|
-	|:--|:----|:----|
-	|refresh_token|String|refresh token|
-	
-	**example**
-
-	``` var url = /oauth/token?refresh_token=1234```
-
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-	|Authorization|String|oauth type & token 
-
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-app|String|apply app id|
-	|-mobile|String|user mobile|
-	|-access_token|String|access token|
-	|-refresh_token|String|refresh token|
-	|-access_expire_at|Date|access token expire time|
-	|-refresh_expire_at|Date|refresh token expire time|
-	|-oauth_type|String|oauth type|
-
-	**example**
-
-	```js
-	{
-  		"code": 0,
-  		"message": "operation success",
-  		"result": {
-    		"app": "123",
-    		"mobile": "13823000000",
-    		"user_id": "591400e3ecc497063706bd17",
-    		"access_token": "5680f1b6bac4423e81ac80f2eab85b25",
-    		"refresh_token": "dd65c360361011e784cce76a99da7708",
-    		"access_expire_at": "2017-05-18T06:12:51.990Z",
-    		"refresh_expire_at": "2017-06-10T06:12:51.990Z",
-    		"oauth_type": "bearer"
-  		}
-	}
-
-	```
-
-#### user
-
-* #### get user info
-	**url**:/user/profile
-
-	**method**:GET
-
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-	|Authorization|String|oauth type & token 
-
-	**response**
-
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-user_id|String|user long id (ObjectId)|
-	|-short_id|Number|user short id (Number)|
-	|-chance|Number|a random number create when user signup,0~1|
-	|-mobile|String|user mobile|
-	
-* #### update password
-
-	**url**:/user/password
-
-	**method**:PUT
-
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-	|Authorization|String|oauth type & token 
-	
-	**body**
-
-	|key|type|name
-	|:--|:----|:----|
-	|old_password|String|user old password
-	|new_password|String|user new password
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-
-* #### reset password
-
-	**url**:/user/password
-
-	**method**:POST
-
-	**headers**
-	
-	|key|type|name
-	|:--|:----|:----|
-	|app|String|app id 
-	|secrect|String|app secrect
-
-	**body**
-
-	|key|type|name
-	|:--|:----|:----|
-	|password|String|user new password
-	|mobile|String|user mobile
-	|verify_code|String|user receive sms code
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-
-#### public
-* #### apply sms verify code
-
-	**url**:/public/sms/:type
-
-	**method**:POST
-
-	**body**
-
-	|key|type|name
-	|:--|:----|:----|
-	|mobile|String|the mobile to receive sms
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-#### admin
-
-* #### apply app
-
-	**url**:/admin/app
-
-	**method**:POST
-
-	**body**
-
-	|param|type|name
-	|:--|:----|:----|
-	|app|String|app name
-
-	**example**
-
-	```js
-	{
-		"app":"1234"
-	}
-
-	```
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	
-		
-	**example**
-	
-	
-	```js
-	{
-  		"code": 7001,
-  		"message": "app exist"
-	}
-
-	```
-* #### get app secret (for dev)
-
-	**url**:/admin/app/:appId
-
-	**method**:GET
-
-	**response**
-	
-	|param|type|name|
-	|:--|:----|:----|
-	|code|Number|status code 0:success|
-	|message|String|status code message|
-	|result|Object|result object|
-	|-{appId}|String|key=>appid value=>app secret|
-		
-	**example**
-	
-	
-	```js
-	{
-  		"code": 0,
-  		"message": "operation success",
-  		"result": {
-    		"1234": "a7ad0a5ae83a41c0ae25934ee02c3a13"
-  		}
-	}
-	```
+		- passport.js 
+			```js
+			var bcrypt = require('bcrypt');
+			var Promise = require('bluebird');
+			var config = require('../config');
+			Promise.promisifyAll(bcrypt);
+			/**
+			 * 加盐加密
+			 * @param password {string} 原始密码
+			 * @return hash {object} 加密密码
+			 * @author gh
+			 */
+			var encrypt = async function(password) {
+			    var salt = await bcrypt.genSaltAsync(config.password.saltTimes);
+			    var hash = await bcrypt.hashAsync(password, salt);
+			    return hash;
+			};
+			/**
+			 * 密码对比
+			 * @param password {string} 原始密码
+			 * @param hash {string} 加密密码
+			 * @return res {boolean} 比对结果 true:密码匹配 | false:密码不匹配
+			 * @author gh
+			 */
+			var validate = async function(password, hash) {
+			    var res = await bcrypt.compareAsync(password, hash);
+			    return res
+			};
+			module.exports = {
+			    encrypt,
+			    validate
+			}
+			``` 
+	* test 测试用例文件夹			
+	* util 工具类的封装

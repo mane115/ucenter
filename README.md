@@ -2,10 +2,12 @@
 * #### model设计
 	* redis
 		* app.js
+		
 			|key|type|name
 			|:--|:----|:----
 			|apps|hash|hget apps {appId} =>{app secret}
 		* token.js
+		
 			|key|type|name
 			|:--|:----|:----
 			|token:${token}|hash|key为token的值|
@@ -17,6 +19,7 @@
 			|-expire_at|hash field|token 到期日期（timestamp）
 			|-type|hash field|token类型 （access_token/refresh_token）
 		* user.js
+		
 			|key|value|name
 			|:--|:--|:--
 			|user:total:${app}|keys|存储app对应的用户总数
@@ -24,6 +27,7 @@
 			
 	* mongo
 		* user.js
+		
 			|key|type|name
 			|:--|:----|:----|
 			|_id|ObjectId|mongo主键
@@ -42,6 +46,7 @@
 			    users.index({short_id: 1});
 			```
 		* app.js
+		
 			|key|type|name
 			|:--|:----|:----|
 			|_id|ObjectId|mongo主键

@@ -54,6 +54,7 @@ var grantToken = async function(ctx, next) {
         app: app,
         mobile: ctx.user.mobile,
         user_id: tokenInfo.user_id,
+        user_short_id: tokenInfo.user_short_id,
         access_token: tokenInfo.accessToken,
         refresh_token: tokenInfo.refreshToken,
         access_expire_at: tokenInfo.accessTokenExpiresOn,
@@ -124,6 +125,7 @@ var refresh = async function(ctx, next) {
     ctx.oauth = {
         app,
         user_id: tokenInfo.user_id,
+        user_short_id: +tokenInfo.user_short_id,
         access_token: accessTokenInfo.accessToken,
         refresh_token: refreshToken,
         access_expire_at: accessTokenInfo.accessTokenExpiresOn,

@@ -48,13 +48,21 @@
 			|status|Number|用户状态 0:active 1:baned 
 			|create_at|Date|用户创建日期
 			|chance|Number|创建的时候随机生成的0~1数，用于随机选取用户
+			|oauth|Array|存储用户授权平台的信息
+			|-platform|String|授权平台名称 
+			|-platform_user_id|String|平台的用户id
+			|-platform_user_name|String|平台用户名
+			|-email|String|用户在平台绑定的邮箱
+			|-avatar|String|平台的用户头像
+			|-status|Number|用户状态 0:active 1:baned 
+			|bind_at|Date|绑定时间
 			
 			索引：
 			```js
-			  	users.index({create_at: -1});
+			    users.index({create_at: -1});
 			    users.index({name: 1});
 			    users.index({mobile: 1});
-			    users.index({short_id: 1});
+			    users.index({'oauth.platform': 1,'oauth.platform_user_id': 1}, {unique: true});
 			```
 			
 		* app.js

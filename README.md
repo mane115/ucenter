@@ -1,4 +1,6 @@
 # Ucenter
+* #### [API doc](https://github.com/mane115/ucenter/blob/master/api.md)
+
 * #### 版本
 
 	|version|content|date

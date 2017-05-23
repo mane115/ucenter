@@ -10,7 +10,7 @@ const Router = require('koa-router'),
     router = new Router({prefix: config.baseUrl});
 
 router.use('/*', util.handleResponse);
-router.use('/oauth', authMid.verifyApp, log.oauth, oauth.routes(), oauth.allowedMethods());
+router.use('/oauth',  log.oauth, oauth.routes(), oauth.allowedMethods());
 router.use('/admin', log.admin, admin.routes(), admin.allowedMethods());
 router.use('/user', authMid.verifyApp, log.user, user.routes(), user.allowedMethods());
 router.use('/public', authMid.verifyApp, log.common, publicRouter.routes(), publicRouter.allowedMethods());

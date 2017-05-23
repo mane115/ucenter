@@ -1,11 +1,15 @@
-const userDao = require('../dao/user'),
+const querystring = require('querystring'),
+    userDao = require('../dao/user'),
     appDao = require('../dao/app'),
     tokenDao = require('../dao/token'),
     tokenRedisDao = require('../dao/redis/token'),
     userRedisDao = require('../dao/redis/user'),
     passport = require('../service/passport'),
     tokenService = require('../service/token'),
-    STATUS = require('../common/const').STATUS,
+    config = require('../config'),
+    http = require('../util/http'),
+    _const = require('../common/const'),
+    STATUS = _const.STATUS,
     ERROR = require('../common/error.map');
 var signin = async function(ctx, next) {
     var body = ctx.request.body;
@@ -33,7 +37,7 @@ var signin = async function(ctx, next) {
     userRedisDao.daySignInRecord(appInfo.user_short_id, app);
 };
 var grantToken = async function(ctx, next) {
-    var app = ctx.get('app');
+    var app = ctx.get('app') || ctx.app;
     var tokenInfo = tokenService.grantToken();
     var expiredToken = await tokenDao.getToken(app, ctx.user._id);
     if (expiredToken) {
@@ -125,7 +129,7 @@ var refresh = async function(ctx, next) {
     ctx.oauth = {
         app,
         user_id: tokenInfo.user_id,
-        user_short_id: +tokenInfo.user_short_id,
+        user_short_id: + tokenInfo.user_short_id,
         access_token: accessTokenInfo.accessToken,
         refresh_token: refreshToken,
         access_expire_at: accessTokenInfo.accessTokenExpiresOn,
@@ -135,11 +139,82 @@ var refresh = async function(ctx, next) {
     appDao.updateRefreshAt(app, tokenInfo.userId);
     userRedisDao.daySignInRecord(tokenInfo.user_short_id, app);
 };
+
+var redirectGithub = async function(ctx, next) {
+    // var state = 'test';
+    var tempToken = await tokenRedisDao.grantTempToken(60);
+    var params = {
+        state: tempToken,
+        client_id: config.oauth.github.client_id,
+        scope: config.oauth.github.scope,
+        redirect_uri: config.oauth.github.redirect_uri,
+        scope: config.oauth.github.scope
+    };
+    params = querystring.stringify(params);
+    var url = `${config.oauth.github.user_comfirm}?${params}`;
+    ctx.redirect(url);
+};
+var githubCallback = async function(ctx, next) {
+    var state = ctx.query.state;
+    var validateSstate = await tokenRedisDao.validateTempToken(state);
+    if (!validateSstate) {
+        throw ERROR.AUTH.UNAUTH
+    }
+    var params = {
+        code: ctx.query.code,
+        client_id: config.oauth.github.client_id,
+        client_secret: config.oauth.github.client_secret
+    };
+    var headers = {
+        Accept: 'application/json'
+    };
+    params = querystring.stringify(params);
+    var url = `${config.oauth.github.getToken}?${params}`;
+    var result = await http.get(url, headers);
+    ctx.oauth = result;
+    await next();
+};
+var getGitHubUserInfo = async function(ctx, next) {
+    var url = config.oauth.github.getUserInfo(ctx.oauth.access_token)
+    var headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'ucenter'
+    };
+    var result = await http.get(url, headers);
+    ctx.app = 'github';
+    ctx.oauthUser = {
+        platform: 'github',
+        platform_user_id: result.id,
+        platform_user_name: result.login,
+        email: result.email,
+        avatar: result.avatar_url
+    };
+    await next();
+};
+var getOauthUserInfo = async function(ctx, next) {
+    var user = await userDao.findUserByOauth(ctx.oauthUser.platform, ctx.oauthUser.platform_user_id);
+    if (!user) {
+        user = await userDao.createUserByOauth(ctx.oauthUser);
+    } else {
+        let tokenInfo = await tokenDao.delToken(ctx.oauthUser.platform, user._id);
+        await Promise.all([
+            tokenRedisDao.delToken(tokenInfo.access_token),
+            tokenRedisDao.delToken(tokenInfo.refresh_token)
+        ])
+    }
+    ctx.user = user;
+    ctx.user.user_short_id = `${ctx.oauthUser.platform}:${ctx.oauthUser.platform_user_id}`;
+    await next();
+};
 module.exports = {
     signin,
     signout,
     grantToken,
     bearerReply,
     getExistToken,
-    refresh
+    refresh,
+    redirectGithub,
+    githubCallback,
+    getGitHubUserInfo,
+    getOauthUserInfo
 }

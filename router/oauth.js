@@ -10,4 +10,7 @@ router.post('/signin/bearer', filter.signin, oauthCtr.signin, oauthCtr.grantToke
 router.post('/signin/compatible', filter.signin, oauthCtr.signin, oauthCtr.getExistToken, oauthCtr.grantToken);
 router.delete('/signout', authMid.getTokenInfo, oauthCtr.signout);
 router.get('/token', oauthCtr.refresh, oauthCtr.bearerReply);
+//oauth2
+router.get('/github', oauthCtr.redirectGithub);
+router.get('/callback/github', oauthCtr.githubCallback, oauthCtr.getGitHubUserInfo, oauthCtr.getOauthUserInfo, oauthCtr.grantToken, oauthCtr.bearerReply);
 module.exports = router;

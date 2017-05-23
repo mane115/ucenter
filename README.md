@@ -55,7 +55,7 @@
 			|-email|String|用户在平台绑定的邮箱
 			|-avatar|String|平台的用户头像
 			|-status|Number|用户状态 0:active 1:baned 
-			|bind_at|Date|绑定时间
+			|-bind_at|Date|绑定时间
 			
 			索引：
 			```js

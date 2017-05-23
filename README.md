@@ -1,4 +1,11 @@
 # Ucenter
+* #### 版本
+
+	|version|content|date
+	|:--|:----|:----
+	|v0.1.0|项目迁移构建|17.04.23
+	|v0.2.0|支持通过github授权登录|17.05.23
+	
 * #### model设计
 	* redis
 		* app.js

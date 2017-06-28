@@ -29,7 +29,7 @@ module.exports = {
       library: env.REDIS_DB || 0,
       port: 6379,
       host: '127.0.0.1',
-      url: env.REDIS_URL || 'redis://127.0.0.1:6379',
+      url: env.REDIS_PORT || 'redis://127.0.0.1:6379',
       pwd: env.REDIS_PWD || ''
     },
     mysql: {
@@ -43,7 +43,7 @@ module.exports = {
       multipleStatements: true, //允许一条query可以包含多条sql语句
     },
     mongo: {
-      url: env.MONGO_URL || 'mongodb://127.0.0.1:27017/ucenter'
+      url: env.MONGO_PORT || 'mongodb://127.0.0.1:27017/ucenter'
     }
   },
   log: {

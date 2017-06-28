@@ -1,6 +1,6 @@
 let env = process.env
 module.exports = {
-  port: 3004,
+  port: env.PROT || 3004,
   baseUrl: '/api/v1',
   session: {
     key: 'HANDSOMEGH',
@@ -43,7 +43,7 @@ module.exports = {
       multipleStatements: true, //允许一条query可以包含多条sql语句
     },
     mongo: {
-      url: 'mongodb://127.0.0.1:27017/ucenter'
+      url: env.MONGO_URL || 'mongodb://127.0.0.1:27017/ucenter'
     }
   },
   log: {

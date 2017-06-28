@@ -5,4 +5,5 @@ const Router = require('koa-router'),
 router.get('/app', adminCtr.getApp);
 router.get('/app/:app', adminCtr.getApp);
 router.post('/app', filter.addApp, adminCtr.addApp);
+
 module.exports = router;

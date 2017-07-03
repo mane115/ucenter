@@ -1,0 +1,19 @@
+ucenter:
+  image: gho223/ucenter:0.2.1
+  links:
+  - redis
+  - mongo
+  ports:
+  - "3000:3000"
+mongo:
+  image: tutum/mongodb
+  environment:
+    - AUTH=NO
+  expose:
+    - "27017"
+redis:
+  image: redis
+  volumes:
+    - /Users/gh/data:/data
+  expose:
+    - "6379"

@@ -1,7 +1,6 @@
 # Ucenter
 * #### [API doc](https://github.com/mane115/ucenter/blob/master/api.md)
 
-* #### [docker image](https://hub.docker.com/r/gho223/ucenter)
 
 * #### 版本
 
@@ -10,7 +9,15 @@
 	|v0.1.0|项目迁移构建|17.04.23
 	|v0.2.0|支持通过github授权登录|17.05.23
 	|v0.2.1|支持docker！从配置上支持😅|17.06.28
-	
+
+* #### [docker image](https://hub.docker.com/r/gho223/ucenter)
+
+* #### docker-compose run
+
+	```bash
+	docker-compose up -d
+	```
+
 * #### model设计
 	* redis
 		* app.js
